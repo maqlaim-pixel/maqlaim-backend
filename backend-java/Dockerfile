@@ -1,31 +1,80 @@
-# ==========================================
-# TravelVista Backend — Dockerfile
-# Deploy: Render / Railway / Fly.io
-# Database: Neon (cloud PostgreSQL)
-# ==========================================
-
-# ---------- Stage 1: Build ----------
-FROM maven:3.9.6-eclipse-temurin-21 AS build
+## ═══════════════════════════════════════════════
+## Stage 1: Build with Maven
+## ═══════════════════════════════════════════════
+#FROM maven:3.9.6-eclipse-temurin-17 AS build
+#WORKDIR /app
+#
+## Copy pom.xml first for dependency caching
+#COPY pom.xml .
+#RUN mvn dependency:go-offline -B
+#
+## Copy source and build
+#COPY src ./src
+#RUN mvn clean package -DskipTests -B
+#
+## ═══════════════════════════════════════════════
+## Stage 2: Run with JRE 17
+## ═══════════════════════════════════════════════
+#FROM eclipse-temurin:17-jre-jammy
+#
+## Install curl for health checks
+#RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+#
+#WORKDIR /app
+#
+## Create non-root user for security
+#RUN groupadd -r travelvista && useradd -r -g travelvista travelvista
+#
+## Create uploads directory
+#RUN mkdir -p /app/uploads && chown -R travelvista:travelvista /app
+#
+## Copy the built JAR
+#COPY --from=build --chown=travelvista:travelvista /app/target/*.jar app.jar
+#
+#USER travelvista
+#
+## Expose port (Render injects PORT env var)
+#EXPOSE 8080
+#
+## Health check for Render
+#HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+#  CMD curl -f http://localhost:${PORT:-8080}/health || exit 1
+#
+## Start the application
+## Render sets the PORT env var automatically
+#ENTRYPOINT ["sh", "-c", "java -jar app.jar"]
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 
 WORKDIR /app
+
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
+
 COPY src ./src
 RUN mvn clean package -DskipTests -B
 
-# ---------- Stage 2: Run ----------
-FROM eclipse-temurin:21-jre-alpine
+
+FROM eclipse-temurin:17-jre-jammy
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-RUN addgroup -S travelvista && adduser -S travelvista -G travelvista
-RUN mkdir -p /app/uploads && chown -R travelvista:travelvista /app
 
-COPY --from=build /app/target/*.jar app.jar
+RUN groupadd -r travelvista && \
+    useradd -r -g travelvista travelvista
+
+RUN mkdir -p /app/uploads && \
+    chown -R travelvista:travelvista /app
+
+COPY --from=build --chown=travelvista:travelvista /app/target/*.jar app.jar
 
 USER travelvista
+
 EXPOSE 8080
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget -qO- http://localhost:8080/api/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+  CMD curl -f http://localhost:${PORT:-8080}/health || exit 1
 
-ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=docker"]
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -jar app.jar"]

@@ -1,8 +1,19 @@
-@"
+# IDE
 .idea/
+*.iml
+
+# Build output
 target/
+
+# Uploaded images
 uploads/
+
+# Compiled classes
 *.class
+
+# Logs
 *.log
-"@ | Out-File -Encoding utf8 .gitignore
-"@ | Out-File -Encoding utf8 .gitignore
+
+# Environment (secrets)
+.env
+.env.local
