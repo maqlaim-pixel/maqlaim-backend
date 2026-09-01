@@ -1,13 +1,15 @@
 # Dependencies
-node_modules/
+**/node_modules/
 
 # Build output
 dist/
+**/target/
 
 # Environment files
 .env
 .env.local
 .env.*.local
+.env.docker
 
 # IDE
 **/.idea/
@@ -25,3 +27,10 @@ Thumbs.db
 
 # Vite cache
 **/.vite/
+
+# Backend uploads
+backend-java/uploads/
+
+# Backend jar
+**/*.jar
+**/*.class

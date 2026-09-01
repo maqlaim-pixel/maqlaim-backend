@@ -1,0 +1,15 @@
+# ============================================
+# TravelVista Backend — .dockerignore
+# ============================================
+
+.git
+.gitignore
+.idea
+*.iml
+target/
+uploads/
+*.log
+README.md
+Dockerfile
+docker-compose*.yml
+.env*
