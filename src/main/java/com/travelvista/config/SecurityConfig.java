@@ -54,6 +54,7 @@ public class SecurityConfig {
                 .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/dashboard/**")).permitAll()
                 .requestMatchers(AntPathRequestMatcher.antMatcher("/api/images/**")).permitAll()
                 .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.POST, "/api/leads/public/submit")).permitAll()
+                .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/health")).permitAll()
                 // ── Everything else under /api requires authentication ──
                 .anyRequest().authenticated()
             )
